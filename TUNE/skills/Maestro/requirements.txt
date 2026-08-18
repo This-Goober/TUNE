@@ -1,0 +1,4 @@
+librosa>=0.10
+numpy>=2.0
+torchcrepe>=0.0.24
+soundfile>=0.12
