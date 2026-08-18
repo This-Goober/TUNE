@@ -2,7 +2,7 @@
 
 Audio-first violin intonation analyzer, packaged as an installable [Claude skill](https://docs.claude.com). It turns a scale recording into a teacher-, audition-, or self-review-style pitch report: it detects each note, measures how far it sits from the expected pitch in cents, and (when given the scale) separates *wrong notes* from *intonation drift*.
 
-The script is the judge; the model is the narrator — the analyzer computes the numbers, the skill turns them into prose.
+The script judges; the model is the narrator, then the analyzer computes the numbers. The skill turns them into prose.
 
 ## Layout
 
