@@ -1,3 +1,13 @@
+<div align="center">
+
+# TUNE
+
+**[your one-line TUNE description]**
+
+[![Substack](https://img.shields.io/badge/Substack-Read%20the%20TUNE%20series-FF6719?logo=substack&logoColor=white)](https://eideetan.substack.com/s/tune-exploration-of-ai-pitch-detection)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue)](LICENSE)
+
+</div>
 # TUNE
 
 **Can an AI tell a violinist something true and useful about their intonation?**
