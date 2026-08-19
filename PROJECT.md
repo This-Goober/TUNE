@@ -50,34 +50,42 @@ describer). Vibrato-sensitivity and noise-robustness are **experiments**, not sk
   Substack drafts + framing kits, project summary, recording-session plan, reel script.
 - **GitHub** (github.com/This-Goober/TUNE) — **this folder is the repo.** `git init` lives
   at the TUNE root, so skills, experiments, and reference audio all publish together; the repo
-  reads as a public lab notebook. `skills/maestro-entry/` is gitignored and stays private.
+  reads as a public lab notebook. Anything private lives in `_private/` — gitignored, and kept
+  as one obvious top-level folder so it's never dragged into an upload by accident.
 
 ## Folder map (this folder)
 
 ```
-TUNE/
+TUNE/                              ← this folder IS the public repo
+├── README.md                      ← the repo's front page (written for visitors)
 ├── PROJECT.md                     ← this file (on-ramp)
+├── .gitignore
 ├── skills/
-│   ├── Maestro/                   ← the analyzer skill / GitHub repo mirror
-│   │   ├── SKILL.md
-│   │   ├── scripts/audio_v0.py
-│   │   └── references/DESIGN.md   ← capability map, known gaps, roadmap (audio only)
-│   └── maestro-entry/             ← PRIVATE journaling helper (keeps entries consistent;
-│                                     do NOT push to the public GitHub repo)
+│   ├── README.md                  ← what a skill is, how to install it
+│   └── Maestro/                   ← the analyzer skill (public)
+│       ├── SKILL.md
+│       ├── scripts/audio_v0.py
+│       └── references/DESIGN.md   ← capability map, known gaps, roadmap (audio only)
 ├── experiments/
+│   ├── README.md                  ← what the experiments ask and answer
 │   ├── lib/                       ← shared helpers (run_pyin.py, synth.py)
 │   ├── 001-format-m4a-vs-wav/     ← Entry 001
 │   ├── phase0-calibration/        ← Entry 002 (scripts + RESULTS.md)
 │   ├── phase1-failure-modes/      ← Entry 003 (scripts + RESULTS-phase1.md)
-│   └── phase2-real-audio/         ← next: real-recording analysis goes here
+│   └── phase2-judging/            ← the verdict knobs (scripts; RESULTS still to write)
 ├── audio/
+│   ├── README.md                  ← what each recording is, and which experiment uses it
 │   ├── reference-2026-06/         ← June reference takes (scale_notvib/_vib, wav+m4a)
-│   └── phase2-session/            ← drop the recording-session takes here (see README)
-└── _archive/                      ← old handoff bundle; safe to delete after review
+│   └── phase2-session/            ← drop the recording-session takes here
+└── _private/                      ← NEVER publish. maestro-entry lives here.
 ```
 
 To run an experiment script: `python experiments/<name>/<script>.py` from the project
-root. Audio paths now point at `audio/`, not the old `samples/`.
+root. Audio paths point at `audio/`, not the old `samples/`.
+
+**Publishing rule:** everything in this folder is public *except* `_private/`. When uploading
+by hand, drag the contents (`skills`, `experiments`, `audio`, `README.md`, `PROJECT.md`) —
+never the TUNE folder itself, or it nests a level deep — and never `_private/`.
 
 ---
 
@@ -165,7 +173,7 @@ measurement, CREPE-vs-pYIN comparison, redoing the vibrato curve with a continuo
   and scripts-for-video are Drive docs. Experiment scripts, skills, and recordings live in
   this folder.
 - **New skills** get their own `skills/<name>/` folder (self-contained: SKILL.md + scripts/ +
-  references/, relative paths). `maestro-entry` stays out of the public GitHub repo.
+  references/, relative paths). Private helpers live in `_private/`, never in `skills/`.
 
 ---
 
