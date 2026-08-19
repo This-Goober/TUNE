@@ -1,4 +1,4 @@
-# PROJECT.md — TUNE / maestro / "Vibe-Coding an Ear"
+# PROJECT.md — TUNE
 
 **Read this first, then the Drive journal (`maestro-lab-journal.md`), before doing anything.**
 This file is the on-ramp: it exists so a fresh session with no memory of prior chats can
