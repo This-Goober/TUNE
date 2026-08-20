@@ -5,7 +5,7 @@ import sys, subprocess, tempfile, warnings
 from pathlib import Path
 from collections import defaultdict
 warnings.filterwarnings("ignore")
-import pathlib; sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / "skills" / "maestro" / "scripts"))
+import pathlib; sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / "skills" / "Maestro" / "scripts"))
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "lib"))
 import numpy as np
 import audio_v0 as av

@@ -6,8 +6,8 @@ from pathlib import Path
 warnings.filterwarnings("ignore")
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "lib"))
 import numpy as np
-from synth import build_signal, target_hz
-from run_pyin import analyze, SYN_SR
+from synth import build_signal, target_hz, SYN_SR
+from run_pyin import analyze
 
 
 def read_rows(specs):

@@ -7,9 +7,9 @@ import sys, subprocess, warnings
 from pathlib import Path
 warnings.filterwarnings("ignore")
 HERE = Path(__file__).resolve().parent
-LIB = HERE.parents[1] / "lib"
+LIB = HERE.parent / "lib"
 sys.path.insert(0, str(LIB))
-sys.path.insert(0, str(HERE.parents[2] / "skills" / "maestro" / "scripts"))
+sys.path.insert(0, str(HERE.parents[1] / "skills" / "Maestro" / "scripts"))
 import numpy as np, librosa, soundfile as sf
 import audio_v0 as av
 from synth import synth_tone

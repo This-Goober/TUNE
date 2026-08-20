@@ -9,7 +9,7 @@ LIB = Path(__file__).resolve().parents[1] / "lib"
 sys.path.insert(0, str(LIB))
 import numpy as np, librosa
 from synth import synth_tone, target_hz, SYN_SR
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "skills" / "maestro" / "scripts"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "skills" / "Maestro" / "scripts"))
 import audio_v0 as av
 
 # single sustained tone, E5 detuned +25¢ (snaps to +30 at coarse resolution)

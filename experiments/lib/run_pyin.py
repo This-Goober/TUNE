@@ -5,15 +5,18 @@ the project folder is checked out (Drive, repo, sandbox) without absolute paths.
 
 pYIN note: librosa.pyin's default `resolution=0.1` means 0.1 semitone = 10-cent
 pitch bins. Phase 0 (Entry 002) found this quantizes every cents reading to 10¢.
-Pass a finer `resolution` (e.g. 0.01) for 1¢ accuracy — but it is ~360x slower and
-impractical on full recordings, which is why cent-level work really needs CREPE.
+Pass a finer `resolution` (e.g. 0.01) for 1¢ accuracy. NOTE: an earlier version of this
+note said that was ~360x slower and that cent-level work therefore needs CREPE. Phase 2
+overturned that — the 360x came from searching the whole G3-E7 range at once. Locate the
+note coarsely first, then refine at 0.01 over a +/-3 semitone band, and the cost is 2.8x
+for 0.36¢ mean error. See experiments/phase2-judging/p2_tworuler.py.
 """
 import sys
 from pathlib import Path
 
 # project root = two levels up from experiments/lib/
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "skills" / "maestro" / "scripts"))
+sys.path.insert(0, str(ROOT / "skills" / "Maestro" / "scripts"))
 
 import numpy as np
 import librosa
