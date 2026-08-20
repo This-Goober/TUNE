@@ -1,0 +1,11 @@
+# Anything private — never publish this folder
+_private/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# OS
+.DS_Store
