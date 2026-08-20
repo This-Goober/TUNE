@@ -21,7 +21,7 @@ of a human performance. Synthetic first, real playing after.
 | [`001-format-m4a-vs-wav/`](001-format-m4a-vs-wav/) | Does a compressed file (m4a) change the reading vs lossless (WAV)? | No — identical to the decimal on the same take. |
 | [`phase0-calibration/`](phase0-calibration/) | Does the tool measure correctly at all? | Mostly, but it reads in **10¢ steps** — a blunt ruler. |
 | [`phase1-failure-modes/`](phase1-failure-modes/) | Where does it break — vibrato, noise, short notes, expressive tuning? | Pitch measurement is tough; **note-splitting** is the weak part. |
-| [`phase2-judging/`](phase2-judging/) | Is the pass/fail verdict itself fair, and can it be adjusted? | Turns the hidden constants into visible, adjustable knobs. |
+| [`phase2-judging/`](phase2-judging/) | Is the pass/fail verdict itself fair, and can it be adjusted? | The strictness dial mostly **doesn't work** — and the ruler can be fixed cheaply. |
 | [`lib/`](lib/) | — | Shared helpers: tone synthesis and the pitch-tracker wrapper. |
 
 Each folder has a `RESULTS` file with the actual numbers, tables, and caveats. The narrative
@@ -53,6 +53,21 @@ older tuning musicians naturally lean into — and its sixth sits about 15.6¢ b
 grid, just past the fail line. A flawless performance gets marked wrong. And the coarse 10¢
 ruler currently rounds that error away, hiding the tool's most interesting flaw behind its
 other one.
+
+**The strictness dial barely functions.** Sweeping the pass/fail threshold, every setting from
+±10¢ to ±20¢ gives an identical verdict — 22 of 25 steps change nothing. The tool literally
+cannot tell a strict setting from a lenient one, because the reading is quantized more coarsely
+than the dial. "Is ±15¢ too harsh?" is unanswerable on the standing setup.
+
+**But the ruler was fixable for free.** Locating a note coarsely and then re-measuring at 1¢
+resolution over a narrow band around it cuts the error from 2.8¢ to 0.36¢ for 2.8× the time —
+not the 360× that got fine resolution shelved as impractical. That cost was an artifact of
+searching the whole pitch range at once, not a fact about the tracker.
+
+**And the real problem survived the fix.** Once the ruler is fine enough to see the
+equal-temperament penalty, what it reveals is a legitimate musical choice sitting about half a
+cent from the fail line — close enough that any hard threshold decides it by measurement noise.
+Precision doesn't settle which standard applies. That question isn't a measurement problem.
 
 ## Which audio each experiment uses
 
