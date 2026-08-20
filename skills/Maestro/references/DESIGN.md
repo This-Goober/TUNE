@@ -29,8 +29,9 @@ what standard to measure against.** Every judgment constant is an explicit, visi
 
 | Capability | Approach | Status |
 |---|---|---|
-| Monophonic pitch (f0) | **CREPE** (neural, robust to vibrato and noise) | Intended — dependency stack fails in this environment |
-| Monophonic pitch, fallback | **librosa pYIN** (probabilistic YIN + HMM) | **In use.** Quantizes to 10¢ by default |
+| Monophonic pitch (f0) | **CREPE** (neural, robust to vibrato and noise) | Not installed — dependency stack fails here. Wanted for *robustness*, not resolution |
+| Monophonic pitch, fallback | **librosa pYIN** (probabilistic YIN + HMM) | **In use.** Quantizes to 10¢ at default resolution |
+| Cent-level resolution | **Two-pass pYIN**: locate coarsely, refine at 1¢ over a ±3-semitone band | Proven in Phase 2 (0.36¢ mean error, 2.8× cost). **Not yet wired into the pipeline** |
 | Note onset / segmentation | librosa `onset_detect` + merge pass | Built; the weakest layer |
 | Scale alignment | DTW against a named scale template | Built; optional (`--scale`) |
 | Cents deviation | Signed distance to a stated reference grid | Built |
@@ -49,6 +50,7 @@ input (.wav/.m4a/.mp4)
    │  ffmpeg decode → 22050 Hz mono
    │
    ├── pitch track (pYIN; CREPE when available) → f0(t)
+   │      └── optional second pass at 1¢ over a narrow band → cent-level f0  [built, not default]
    ├── onset detect → note boundaries
    │      └── merge over-segmented slivers, drop unvoiced
    ├── per note: median f0 over the window, attack transient trimmed
@@ -84,16 +86,27 @@ intonation scorers is frame-by-frame grading, not pitch measurement.
 
 ## 5. Known gaps
 
-1. **The ruler reads in 10¢ steps.** pYIN's default resolution is 0.1 semitone, nearly as coarse
-   as the ±15¢ line it's judged against. Fine resolution (1¢) is accurate but ~360× slower —
-   unusable on a real recording. *Fill: CREPE, which is both fine and fast.* This gates most of
-   the interesting work.
+1. **The ruler reads in 10¢ steps — but this is now fixable, and unfixed.** pYIN's default
+   resolution is 0.1 semitone, nearly as coarse as the ±15¢ line it's judged against. This
+   document previously said fine resolution was ~360× slower and that CREPE was the fill.
+   **Both claims were wrong.** The 360× came from searching the entire G3–E7 range at 1¢;
+   a two-pass search (locate coarse, refine over ±3 semitones) reaches 0.36¢ mean error for
+   2.8× the cost. *Fill: port `read_twopass` from `experiments/phase2-judging/p2_tworuler.py`
+   into this pipeline.* Until that port happens, the shipped analyzer still reads in 10¢ bins
+   and every judging knob downstream is capped by it.
+   **Caveat blocking the port:** the two-pass reading runs ~+1¢ high near zero offset, cause
+   unknown, and it has never been tested on real (vibrato, noisy, reverberant) audio where
+   the coarse locating pass may not be reliable.
 2. **Segmentation is the fragile layer.** Under noise, or on notes shorter than ~0.3 s, the tool
    miscounts where notes begin and end — while reading every pitch it does catch correctly.
    *Fill: better onset handling, or score against an aligned score rather than detected onsets.*
 3. **Hard pass/fail.** 15.0¢ passes and 15.1¢ fails, with no partial credit. A graded scorer
-   exists in Phase 2 but isn't the default yet. *Fill: decide what a fair curve looks like — which
-   is a musical question, not a coding one.*
+   exists in Phase 2 but isn't the default yet, and **its curve (full credit ±10¢, zero at
+   ±50¢) is invented** — not derived from anything a musician reported. *Fill: decide what a
+   fair curve looks like — which is a musical question, not a coding one.*
+   Sharper form of the problem, from Phase 2: a flawless just-intonation 6th lands ~0.6¢ from
+   the ±15¢ line, so **any** hard threshold decides that note by measurement noise. Precision
+   does not rescue the verdict; it relocates the coin flip.
 4. **No harmonic context.** The tool judges each note against a fixed grid with no idea what
    chord it sits in, whether it's a leading tone, or whether it's a melodic passage (where
    Pythagorean tendencies show up) versus a double stop (where players lean Just). This is the
@@ -111,8 +124,9 @@ intonation scorers is frame-by-frame grading, not pitch measurement.
 
 In rough order of what would teach the most, and matching the open questions in the write-ups:
 
-- **Sweep the threshold.** Treat ±15¢ as a variable rather than a constant and find where
-  verdicts start matching musical judgment.
+- ~~**Sweep the threshold.**~~ ✅ Done (Phase 2). Result: on the standing 10¢ ruler the dial
+  has no effect between ±10¢ and ±20¢ — 22 of 25 steps are dead. With the two-pass ruler it
+  tracks ground truth closely. The dial was never the problem; the ruler under it was.
 - **Alternative pitch targets.** Score the same performance against equal temperament, Just,
   Pythagorean, and expressive leading tones (~80–90¢ semitones) and report the disagreement
   rather than picking a winner.

@@ -52,6 +52,10 @@ describer). Vibrato-sensitivity and noise-robustness are **experiments**, not sk
   at the TUNE root, so skills, experiments, and reference audio all publish together; the repo
   reads as a public lab notebook. Anything private lives in `_private/` — gitignored, and kept
   as one obvious top-level folder so it's never dragged into an upload by accident.
+  **Branch is `main`, both locally and on the remote** (it was `master` locally until
+  2026-08-19, which is why pushes used to misbehave). Publish with `git push`, never by
+  uploading files through the GitHub web UI — hand-uploads create a parallel history that
+  duplicates local commits and makes the two impossible to reconcile cleanly.
 
 ## Folder map (this folder)
 
@@ -72,7 +76,9 @@ TUNE/                              ← this folder IS the public repo
 │   ├── 001-format-m4a-vs-wav/     ← Entry 001
 │   ├── phase0-calibration/        ← Entry 002 (scripts + RESULTS.md)
 │   ├── phase1-failure-modes/      ← Entry 003 (scripts + RESULTS-phase1.md)
-│   └── phase2-judging/            ← the verdict knobs (scripts; RESULTS still to write)
+│   └── phase2-judging/            ← the verdict knobs (scripts + RESULTS-phase2.md)
+├── tools/
+│   └── status.py                  ← prints the repo's ACTUAL state; run before trusting §Current state
 ├── audio/
 │   ├── README.md                  ← what each recording is, and which experiment uses it
 │   ├── reference-2026-06/         ← June reference takes (scale_notvib/_vib, wav+m4a)
@@ -97,69 +103,111 @@ never the TUNE folder itself, or it nests a level deep — and never `_private/`
   per-note table + accuracy summary. Script judges; the model narrates.
 - **Pitch tracker = pYIN, not CREPE.** CREPE needs `torch`; the CUDA wheel overflows disk
   and the CPU wheel's index is blocked in-sandbox. All results so far use librosa pYIN
-  (the design doc's documented fallback). **This is a real constraint, not a footnote —
-  see the 10¢ finding.**
+  (the design doc's documented fallback). **What CREPE is still wanted for is robustness on
+  real, noisy, vibrato-laden audio — NOT resolution.** Resolution was solved without it
+  (see the two-pass fact below).
 - **The metric.** Per note, `cents` = signed distance from the nearest equal-tempered
   semitone on the A=440 grid. Verdict: `OK` if |cents| ≤ 15, else `OFF`; `WRONG` (wrong
   pitch class) only when a scale is given; `unvoiced` = silence. Accuracy = within-tolerance
   ÷ voiced. It scores **intonation precision, not correctness** without a scale, and it's
   hard pass/fail. A uniform tuning offset is penalized (fixed A=440 grid).
 - **KEY CALIBRATION FACT (Entry 002).** pYIN's default `resolution=0.1` semitone means the
-  ruler reads in **10-cent bins**. Fine resolution (0.01 = 1¢) is accurate but ~360× slower
-  and impractical on real recordings → **cent-level work needs CREPE.** Every suspiciously
-  round cents value in older results is this quantization.
+  ruler reads in **10-cent bins**. Every suspiciously round cents value in older results is
+  this quantization.
+- **THAT FACT WAS HALF WRONG (Phase 2, 2026-08-17).** Entry 002 measured 1¢ resolution at
+  ~360× slower and concluded "cent-level work needs CREPE." The 360× was an artifact of
+  searching the whole G3–E7 range at 1¢. **Two-pass refinement** — locate the note at default
+  resolution, then re-run at 1¢ over a ±3-semitone band around it — gets mean error from
+  2.82¢ to **0.36¢ for 2.8× the cost.** Cent-level work never needed CREPE. ⚠️ Not yet wired
+  into `audio_v0.py`; it lives in `experiments/phase2-judging/p2_tworuler.py`.
 - **merge_same_note** collapses consecutive identical pitches by design (repeated same notes
   read as one).
 
 ---
 
-## Current state (as of Entry 003, 2026-07-02; folder reorganized 2026-07-15)
+## Current state
+
+> **⚠️ VOLATILE SECTION — Last verified: 2026-08-19.**
+> Everything from here to "Working conventions" goes stale. Do not trust it on sight.
+> Run `python tools/status.py` to see what is actually on disk and in git, and reconcile
+> before acting on anything below. If the date above is more than a couple of weeks old,
+> assume it is wrong.
 
 **Built:** maestro skill packaged + installable; maestro-entry skill (journaling); journal
-with storyline + Entries 000–003; Phase 0 + Phase 1 experiment scripts + results;
-launch article published on Substack; recording-session plan + reel script drafted (Drive).
+with storyline + Entries 000–003; Phase 0, Phase 1 and the judging experiments (scripts +
+results); launch article published on Substack; recording-session plan + reel script drafted
+(Drive).
 
 **Findings so far:**
 - *Entry 001* — m4a vs WAV: identical readings on a real same-take pair; format is
   transparent for sustained-note intonation.
-- *Entry 002* — Phase 0 calibration: the ruler quantizes to **10¢**; the accurate setting
-  is ~360× slower (needs CREPE); **no inherent top-octave imprecision** on clean tones
-  (corrects an earlier hypothesis — that mess was vibrato); format-transparent for cents but
-  lossy codecs over-segment onsets (merge absorbs most).
+- *Entry 002* — Phase 0 calibration: the ruler quantizes to **10¢**; **no inherent top-octave
+  imprecision** on clean tones (corrects an earlier hypothesis — that mess was vibrato);
+  format-transparent for cents but lossy codecs over-segment onsets (merge absorbs most).
+  *Its "fine resolution is impractical" conclusion was later overturned — see Entry 004.*
 - *Entry 003* — Phase 1 failure modes (all synthetic): median-per-note is **robust to
   vibrato up to ±50¢** (breaks only at ±75–100¢ via frame loss); the **equal-temperament
   penalty is real** (Just 6th = −15.6¢, past the line) but the 10¢ ruler masks it; noise
   never biases cents, it breaks **note segmentation** (collapse below ~10 dB SNR); short
   notes (<0.3 s) are erratic to count but correct in pitch. Cross-cutting: measurement is
   robust, segmentation is the weak layer, and "too harsh" is a scoring-design choice.
-  (The Entry 002 C4 outlier did not reproduce — fragile onset edge effect, closed.)
+- *Judging experiments (`experiments/phase2-judging/`, run 2026-08-17)* — **the strictness
+  dial is quantized into uselessness**: every threshold from ±10¢ to ±20¢ returns an
+  identical verdict, so "is ±15¢ too harsh?" is unanswerable on the standing setup.
+  **Two-pass refinement fixes the ruler for 2.8×, not 360×** (2.82¢ → 0.36¢ mean error),
+  which overturns Entry 002's CREPE-gating conclusion. **And the real unfairness survives
+  the fix**: a flawless Just 6th lands ~0.6¢ from the ±15¢ line, so any hard threshold
+  decides it by measurement noise rather than musicianship. Graded scoring (87/100) vs hard
+  pass/fail (62%) on the same performance; uniform +10¢ offset recovered exactly (→ A4 ≈
+  442.5 Hz). ⚠️ **Journal Entry 004 for this is NOT yet written.**
 
-**Open items:** CREPE installation (the gating step for cent-level work: fair ET-penalty
-measurement, CREPE-vs-pYIN comparison, redoing the vibrato curve with a continuous tracker).
+**Open items, in priority order:**
+1. **Real audio — the biggest hole.** Everything except Entry 001 is synthetic.
+   `audio/phase2-session/` is empty; the T01–T07 session has not happened. The two-pass
+   ruler's coarse locating pass has never met vibrato, bow noise, or a room.
+2. **The unexplained +1¢ two-pass bias near zero offset** — same magnitude as the effects
+   being chased near a threshold. Blocks any sub-cent claim.
+3. **Wire two-pass into `audio_v0.py`** so the actual skill benefits, not just the experiment.
+4. **Re-run the dial with 24–36 notes.** At N=8 each note is worth 12.5 points.
+5. **Multi-target scoring is half-built** — `cents_vs_just` handles just-major only; no
+   Pythagorean, no expressive leading tones (~80–90¢), no disagreement report.
+6. **Segmentation** — named the weak layer in Entry 003, untouched since. Needs no CREPE.
+7. **Vibrato description** (FFT of detrended f0 per note) — turns "vibrato survived" into
+   "vibrato measured".
+8. **CREPE installation** — now wanted only for robustness on real audio, *not* for
+   resolution. Downgraded from blocker to nice-to-have.
+
+**Write-up status:** enough findings exist for Substack #2 (the roadmap's bar is 5 solid
+findings or 1–2 deep ones; the dead dial and the coin-flip Just 6th both qualify). Items 1
+and 2 above are what would make that post honest rather than entirely synthetic.
 
 ---
 
 ## Experiment schedule
 
+⚠️ **The phase numbers below drifted from the folder names.** `experiments/phase2-judging/`
+contains what this schedule calls **Phase 3**. What the schedule calls Phase 2 (real audio)
+has not started. Folder names are kept as-is so existing journal entries and the published
+article stay accurate; trust the folder, not the number.
+
 - **Phase 0 — Calibrate the ruler.** ✅ DONE (Entry 002): offset accuracy, register sweep,
-  note count, repeatability, format matrix.
+  note count, repeatability, format matrix. *(One conclusion since overturned.)*
 - **Phase 1 — Failure modes.** ✅ DONE (Entry 003, synthetic control): vibrato-width curve,
   ET/Just/Pythagorean penalty, noise/SNR robustness, short notes + directionality.
-- **Phase 2 — Real audio (NEXT).** Record the sample batch per **RECORDING-SESSION-PLAN**
-  (in Drive): T01 no-vib baseline, T02/T03 vibrato widths, T04 just intonation vs drone,
-  T05 deliberate errors (ground truth), T06 staccato, T07 repertoire. Doubles as the
-  Instagram reel shoot (see REEL-SCRIPT in Drive). Drop takes in `audio/phase2-session/`,
-  analyze into `experiments/phase2-real-audio/`, compare against the synthetic baselines.
-  Optionally add a public professional recording (a live demo of the ET penalty).
-- **Phase 3 — The judging.** Threshold sweep (is ±15¢ arbitrary?); hard pass/fail vs graded
-  score; tuning-offset attribution. Blocked in part by CREPE.
+- **Phase 3 — The judging.** ✅ MOSTLY DONE, in `experiments/phase2-judging/`: threshold
+  sweep, graded vs hard pass/fail, tuning-offset attribution, two-pass ruler. Remaining:
+  multi-target scoring, and deriving the graded curve from something real.
+- **Phase 2 — Real audio (ACTUALLY NEXT).** Record the sample batch per
+  **RECORDING-SESSION-PLAN** (in Drive): T01 no-vib baseline, T02/T03 vibrato widths, T04
+  just intonation vs drone, T05 deliberate errors (ground truth), T06 staccato, T07
+  repertoire. Doubles as the Instagram reel shoot (see REEL-SCRIPT in Drive). Drop takes in
+  `audio/phase2-session/`, analyze into `experiments/phase2-real-audio/`, compare against
+  the synthetic baselines. Every headline finding so far is synthetic-only until this runs.
 - **Phase 4 — Capability ladder (forward-looking arc).** sharp/flat → auto key/scale detection
   (maestro mode) → chords/harmony wall (needs polyphonic transcription, e.g. Basic Pitch — a
   separate skill) → monophonic melody → sheet music. Answers "what's the value?"
 - **Phase 5 — Breadth.** Other monophonic instruments; melody vs scale; graceful failure on
   double-stops.
-
----
 
 ## Working conventions
 
@@ -169,6 +217,12 @@ measurement, CREPE-vs-pYIN comparison, redoing the vibrato curve with a continuo
   Pull real numbers from the actual run; never invent.
 - **Journal is source of truth**, kept in Drive (`maestro-lab-journal.md`). This PROJECT.md
   is the orientation layer.
+- **Keeping this file honest.** The §Current state block is hand-maintained and WILL rot.
+  Two rules: (a) anyone — human or model — picking this project up runs
+  `python tools/status.py` and reconciles its output against §Current state *before* acting
+  on the doc; (b) whoever finishes an experiment updates §Current state and bumps its
+  "Last verified" date in the same commit as the results. A finding that isn't reflected
+  here within one commit is a finding someone will redo by accident.
 - **Content goes to Drive; code/audio stays here.** Substack drafts, framing kits, plans,
   and scripts-for-video are Drive docs. Experiment scripts, skills, and recordings live in
   this folder.
